@@ -1,0 +1,37 @@
+- hosts: all
+  become: yes
+  tasks:
+    - name: allow 'ubuntu' to have passwordless sudo
+      lineinfile:
+        dest: /etc/sudoers
+        line: "ubuntu ALL=(ALL) NOPASSWD: ALL"
+        validate: "visudo -cf %s"
+
+    - name: set up authorized keys for the ubuntu user
+      authorized_key:
+        user: ubuntu
+        key: https://github.com/klutchell.keys
+        exclusive: yes
+
+    - name: set the hostname
+      hostname:
+        name="{{ inventory_hostname }}"
+      when:
+        ansible_fqdn != ansible_ssh_host
+      register: hostname
+
+    - name: Reboot after hostname changed
+      reboot:
+      when:
+        - hostname is changed
+
+    - name: update /etc/hosts
+      tags:
+        - hosts
+      lineinfile:
+        state: present
+        dest: /etc/hosts
+        line: "{{ ansible_default_ipv4.address }} {{ inventory_hostname }} {{ ansible_hostname }}"
+        regexp: "^{{ ansible_default_ipv4.address }}"
+      when:
+        ansible_fqdn != inventory_hostname

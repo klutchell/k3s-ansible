@@ -1,0 +1,40 @@
+- hosts: master
+  remote_user: ubuntu
+  sudo: yes
+  tasks:
+    - name: Mount device with label DATA
+      hosts: master
+      mount:
+        path: /data
+        src: LABEL=DATA
+        fstype: ext4
+        state: mounted
+
+    - name: Mount device with label CONFIG
+      hosts: master
+      mount:
+        path: /config
+        src: LABEL=CONFIG
+        fstype: ext4
+        state: mounted
+
+    - name: Ensure NFS utilities are installed
+      apt:
+        name: { { item } }
+        state: installed
+        update_cache: yes
+      with_items:
+        - nfs-common
+        - nfs-kernel-server
+
+    - name: Copy /etc/exports
+      template:
+        src: exports.j2
+        dest: /etc/exports
+        owner: root
+        group: root
+
+    - name: Restart nfs server
+      service:
+        name: nfs-kernel-server
+        state: restarted

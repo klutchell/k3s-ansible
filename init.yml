@@ -20,7 +20,7 @@
         ansible_fqdn != ansible_ssh_host
       register: hostname
 
-    - name: Reboot after hostname changed
+    - name: reboot after hostname change
       reboot:
       when:
         - hostname is changed

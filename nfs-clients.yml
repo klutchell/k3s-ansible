@@ -1,25 +1,24 @@
-- hosts: nodes
-  remote_user: ubuntu
-  sudo: yes
-  tasks:
-  - name: Ensure NFS common is installed.
-    apt:
-      name: nfs-common
-      state: installed
-      update_cache: yes
+- hosts: master
+  name: Gather facts from master
+  tasks: []
 
-  - name: Mount device with path /data
-    mount:
-      name: /data
-      src: {{hostvars[groups['master'][0]]['ansible_eth0']['ipv4']['address']}}:/data
-      fstype: nfs
-      opts: defaults,nobootwait
-      state: mounted
-  
-  - name: Mount device with path /config
-    mount:
-      name: /config
-      src: {{hostvars[groups['master'][0]]['ansible_eth0']['ipv4']['address']}}:/config
-      fstype: nfs
-      opts: defaults,nobootwait
-      state: mounted
+- hosts: node
+  become: yes
+  tasks:
+    - name: Create mount points
+      file: path={{ item }} state=directory mode=777 owner=root group=root
+      with_items:
+        - /data
+        - /config
+
+    - name: Ensure nfs-common is present
+      apt:
+        name: nfs-common
+        state: present
+        update_cache: yes
+
+    - name: Mount shares
+      mount: name={{item}} src={{hostvars[groups['master'][0]]['ansible_eth0']['ipv4']['address']}}:{{item}} fstype=nfs opts=defaults state=mounted
+      with_items:
+        - /data
+        - /config

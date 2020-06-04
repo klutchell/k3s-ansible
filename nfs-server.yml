@@ -1,9 +1,13 @@
 - hosts: master
-  remote_user: ubuntu
-  sudo: yes
+  become: yes
   tasks:
+    - name: Create mount points
+      file: path={{ item }} state=directory mode=777 owner=root group=root
+      with_items:
+        - /data
+        - /config
+
     - name: Mount device with label DATA
-      hosts: master
       mount:
         path: /data
         src: LABEL=DATA
@@ -11,18 +15,14 @@
         state: mounted
 
     - name: Mount device with label CONFIG
-      hosts: master
       mount:
         path: /config
         src: LABEL=CONFIG
         fstype: ext4
         state: mounted
 
-    - name: Ensure NFS utilities are installed
-      apt:
-        name: { { item } }
-        state: installed
-        update_cache: yes
+    - name: Ensure nfs-kernel-server is present
+      apt: name={{item}} state=present update_cache=yes
       with_items:
         - nfs-common
         - nfs-kernel-server

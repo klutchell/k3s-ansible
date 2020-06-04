@@ -5,20 +5,18 @@
 - hosts: node
   become: yes
   tasks:
-    - name: Create mount points
-      file: path={{ item }} state=directory mode=777 owner=root group=root
-      with_items:
-        - /data
-        - /config
-
     - name: Ensure nfs-common is present
       apt:
         name: nfs-common
         state: present
         update_cache: yes
-
-    - name: Mount shares
-      mount: name={{item}} src={{hostvars[groups['master'][0]]['ansible_eth0']['ipv4']['address']}}:{{item}} fstype=nfs opts=defaults state=mounted
-      with_items:
-        - /data
-        - /config
+    # - name: Create mount points
+    #   file: path={{ item }} state=directory mode=777 owner=root group=root
+    #   with_items:
+    #     - /data
+    #     - /config
+    # - name: Mount shares
+    #   mount: name={{item}} src={{hostvars[groups['master'][0]]['ansible_eth0']['ipv4']['address']}}:{{item}} fstype=nfs opts=defaults state=mounted
+    #   with_items:
+    #     - /data
+    #     - /config
